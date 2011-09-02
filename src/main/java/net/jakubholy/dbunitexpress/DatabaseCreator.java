@@ -12,10 +12,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.dbunit.DatabaseUnitRuntimeException;
 import org.dbunit.PropertiesBasedJdbcDatabaseTester;
 import org.dbunit.database.IDatabaseConnection;
 import org.slf4j.Logger;
@@ -28,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * It creates a test Derby database at the default location and
  * fills it with data structures defined in a DDL file expected at
- * the default location {@value #DDL_FILE_PATH}.
+ * the default location {@link #DDL_FILE_PATH}.
  * <p>
  * You should run this as a java console application (i.e. the main method)
  * to create the DB.
@@ -45,7 +50,20 @@ public class DatabaseCreator {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DatabaseCreator.class);
 
-	/**
+    private static final DatabaseCreator instance = new DatabaseCreator();
+
+    private URL ddlFile = fileToUrl(DDL_FILE_PATH);
+
+    private static URL fileToUrl(String ddlFilePath) {
+        try {
+            return new File(ddlFilePath).toURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new DatabaseUnitRuntimeException("Failed to turn file into URL: " + ddlFilePath
+                    , e);
+        }
+    }
+
+    /**
 	 * Run a DDL on the (empty) test database to create the schemas and tables
 	 * to fill with test date.
 	 * The DDL is read from the file {@link #DDL_FILE_PATH}.
@@ -66,10 +84,10 @@ public class DatabaseCreator {
     		throw new IllegalArgumentException("The argument connection: java.sql.Connection may not be null.");
     	}
         LOG.info("createDbSchemaFromDdl: Going to initialize the test DB by creating the schema there...");
-        final String sql = readDdlFromFile();
+        final String sql = instance.readDdlFromFile();
 
         LOG.info("createDbSchemaFromDdl: DDL read: " + sql);
-		executeDdl(connection, sql);
+		instance.executeDdl(connection, sql);
 
         LOG.info("createDbSchemaFromDdl: done");
     } /* createDbSchemaFromDdl */
@@ -81,7 +99,7 @@ public class DatabaseCreator {
      * It shouldn't contain any -- comments as JDBC may not be able to ignore them as appropriate.
      * @throws SQLException
      */
-	private static void executeDdl(final Connection connection, final String ddlStatements)
+	private void executeDdl(final Connection connection, final String ddlStatements)
 			throws SQLException {
 
 		final java.sql.Statement ddlStmt = connection.createStatement();
@@ -111,11 +129,12 @@ public class DatabaseCreator {
      * @throws FileNotFoundException
      * @throws IOException
      */
-	private static String readDdlFromFile()
+	private String readDdlFromFile()
 			throws FileNotFoundException, IOException {
 		// DbUnit can't handle line comments within ddl => skip
-        final FileReader fileReader = new FileReader(getDdlFile());
-        final BufferedReader sqlReader = new BufferedReader(fileReader);
+        final Reader rawDdlReader = new InputStreamReader(getDdlFile().openStream());
+
+        final BufferedReader sqlReader = new BufferedReader(rawDdlReader);
         final StringBuffer sqlBuffer = new StringBuffer();
         String line;
         while ((line = sqlReader.readLine()) != null) {
@@ -134,8 +153,8 @@ public class DatabaseCreator {
 		return sqlBuffer.toString();
 	} /* readDdlFromFile */
 
-	private static File getDdlFile() {
-		return new File(DDL_FILE_PATH);
+	private URL getDdlFile() {
+		return ddlFile;
 	}
 
     /**
@@ -202,7 +221,7 @@ public class DatabaseCreator {
     		final String msg = "DDL execution failed. DB URL: '"
     				+ selfCreatingDbConnUrl + "' (created in the current work dir: " +
     				System.getProperty("user.dir") + "). DDL file: " +
-    				getDdlFile().getAbsolutePath();
+    				instance.getDdlFile();
 			LOG.error("createAndInitializeTestDb" + msg, e);
     		throw new DatabaseCreatorFailure(msg, e);
     	} finally {
@@ -214,7 +233,32 @@ public class DatabaseCreator {
     	}
 	} /* createAndInitializeTestDb */
 
-	private static class DatabaseCreatorFailure extends RuntimeException {
+    /** Experimental method - load an additional DDL. */
+    public void loadDdl(String ddlFile) throws DatabaseUnitRuntimeException {
+        setDdlFile(ddlFile);
+        final EmbeddedDbTester embeddedDb = new EmbeddedDbTester();
+        try {
+            final IDatabaseConnection dbUnitConnection =
+                embeddedDb.createAndInitDatabaseTester().getConnection();
+
+            executeDdl(dbUnitConnection.getConnection(), readDdlFromFile());
+        } catch (Exception e) {
+            throw new DatabaseUnitRuntimeException("Failed to load DDL from file " + ddlFile
+                    , e);
+        }
+    }
+
+    /**
+     * Use the given DDL file found in the default location or on the classpath
+     * (co-located with the calling class or at its root).
+     * @param ddlFile (required)
+     * @see #loadDdl(String) 
+     */
+    private void setDdlFile(String ddlFile) {
+        this.ddlFile = EmbeddedDbTester.findConfigFile(ddlFile);;
+    }
+
+    private static class DatabaseCreatorFailure extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
 		public DatabaseCreatorFailure(String message, Throwable cause) {

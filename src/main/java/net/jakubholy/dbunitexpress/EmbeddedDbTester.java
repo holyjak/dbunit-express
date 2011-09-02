@@ -8,11 +8,10 @@
 package net.jakubholy.dbunitexpress;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -485,7 +484,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
     public final IDataSet createDataSetFromFile(final String xmlFileName)
     throws DatabaseUnitRuntimeException, DataSetException {
 
-        InputStream dataSetStream = findConfigFile(xmlFileName);
+        InputStream dataSetStream = findConfigFileStream(xmlFileName);
 
     	final XmlDataSet result = new XmlDataSet(dataSetStream);
 
@@ -511,15 +510,27 @@ public class EmbeddedDbTester implements IDatabaseTester {
      *     Usually used to locate a data set file.
      * </p>
      * @param xmlFileName (required)
-     * @return stream opened for the file
+     * @return URL for the file
      * @trows DatabaseUnitRuntimeException when not found
      */
-    public InputStream findConfigFile(String xmlFileName) throws DatabaseUnitRuntimeException {
+    public  static InputStream findConfigFileStream(String xmlFileName) throws DatabaseUnitRuntimeException {
+        final URL dataSetUrl = findConfigFile(xmlFileName);
+
+        try {
+            return dataSetUrl.openStream();
+        } catch (IOException e) {
+            throw new DatabaseUnitRuntimeException(
+                    "findConfigFileStream: Failed to find the file " +
+                    dataSetUrl, e);
+        }
+    }
+
+    static URL findConfigFile(String xmlFileName) {
         if (xmlFileName == null) {
             throw new IllegalArgumentException("String xmlFileName may not be null");
         }
 
-        InputStream dataSetStream;
+        URL dataSetUrl;
 
         final String defaultPath =
             TEST_DATA_FOLDER + File.separator + xmlFileName;
@@ -527,28 +538,20 @@ public class EmbeddedDbTester implements IDatabaseTester {
 
         if (defaultFile.canRead()) {
             try {
-                dataSetStream = new FileInputStream( defaultFile );
+                dataSetUrl = defaultFile.toURI().toURL();
                 LOG.info("findConfigFile: Loading " +
                         "file {} (found in the default location)"
                         , defaultFile.getAbsolutePath());
-            } catch (FileNotFoundException e) {
-                // this should not happen for we tested defaultFile.canRead()
-                throw new DatabaseUnitRuntimeException(e);
+            } catch (MalformedURLException e) {
+                throw new DatabaseUnitRuntimeException(e); // shouldn't happen...
             }
         } else {
-            final URL dataSetOnCpUrl = findOnClasspath(xmlFileName, defaultPath);
-            try {
-                dataSetStream = dataSetOnCpUrl.openStream();
-                LOG.info("findConfigFile: Loading " +
-                        "the file {} found on the classpath at {}"
-                        , xmlFileName, dataSetOnCpUrl);
-            } catch (IOException e) {
-                throw new DatabaseUnitRuntimeException(
-                        "findConfigFile: Failed to find the file " +
-                        dataSetOnCpUrl, e);
-            }
+            dataSetUrl = findOnClasspath(xmlFileName, defaultPath);
+            LOG.info("findConfigFile: Loading " +
+                    "the file {} found on the classpath at {}"
+                    , xmlFileName, dataSetUrl);
         }
-        return dataSetStream;
+        return dataSetUrl;
     }
 
     /**
@@ -559,7 +562,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
 	 * @return URL of the resource found (never null)
 	 * @throws DatabaseUnitRuntimeException If the file cannot be found or opened
 	 */
-	private URL findOnClasspath(final String xmlFileName, final String defaultPath)
+	private static URL findOnClasspath(final String xmlFileName, final String defaultPath)
 			throws DatabaseUnitRuntimeException {
 
 		URL dataSetOnCpUrl = null;
@@ -605,7 +608,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
 	 * 	<code>new {@link Exception#getStackTrace()}</code>
 	 * @return a non-null list of classes on the call stack that we can access
 	 */
-	private List extractCallStackClasses(final StackTraceElement[] callStack) {
+	private static List extractCallStackClasses(final StackTraceElement[] callStack) {
 
 		if (callStack == null) {
 			throw new IllegalArgumentException("The argument StackTraceElement[] callStack may not be null");
@@ -616,7 +619,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
 		for (int i = 0; i < callStack.length; i++) {
 			final String clazzName = callStack[i].getClassName();
 			if (!(
-					getClass().getName().equals(clazzName)
+					clazzName.startsWith(EmbeddedDbTester.class.getPackage().getName())
 					|| clazzName.startsWith("java.lang.")
 					|| clazzName.startsWith("sun.reflect.")
 					|| clazzName.startsWith("junit.framework.")
@@ -666,16 +669,19 @@ public class EmbeddedDbTester implements IDatabaseTester {
 	 * @param sqlSelect (required) a SQL SELECT statement on the test DB
 	 * @return a new comparator loaded with results of the sqlSelect
 	 * @throws DatabaseUnitRuntimeException
-	 * @throws SQLException
-	 * @throws Exception
 	 *
 	 * @see RowComparator#RowComparator(IDatabaseTester, String)
 	 * @see RowComparator#assertRowCount(int)
 	 * @see RowComparator#assertNext(Object[])
 	 */
-	public RowComparator createCheckerForSelect(final String sqlSelect) throws DatabaseUnitRuntimeException, SQLException {
-		return new RowComparator(getWrappedTester(), sqlSelect);
-	}
+	public RowComparator createCheckerForSelect(final String sqlSelect) throws DatabaseUnitRuntimeException {
+        try {
+            return new RowComparator(getWrappedTester(), sqlSelect);
+        } catch (SQLException e) {
+            throw new DatabaseUnitRuntimeException("RowComparator creation failed for sql " + sqlSelect
+                    , e);
+        }
+    }
 
 	// ####################################################### INTERFACE METHODS
 

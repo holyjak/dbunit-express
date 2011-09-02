@@ -12,6 +12,7 @@ TODO copy changes from TODO
 (7) Added setDataSet(String) that tries to find a file of the given name in testData/ or on the classpath and loads it
 (8) When it is detected in onSetup() that the test database likely isn't initialized, we advice to use Db Creator and report the current working directory
 (9) Added method findConfigFile(name) to simplify custom DataSet creation
+(10) Added DatabaseCreator.loadDdl(name) to load an additional DDL
 
 VERSION 1.2.0 (Apr 2010)
 A major upgrade release:

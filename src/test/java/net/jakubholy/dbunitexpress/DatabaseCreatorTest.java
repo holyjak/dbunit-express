@@ -43,7 +43,7 @@ public class DatabaseCreatorTest extends TestCase {
 
 	}
 
-	/**
+    /**
 	 * Shut down the DB prior to deletion it to avoid inconsistency between
 	 * memory and disk. It will be automatically restarted upon the
 	 * next connection attempt.
@@ -141,5 +141,17 @@ public class DatabaseCreatorTest extends TestCase {
 					" has not succeeded. (Maybe because it's a non-empty folder?)");
 		}
 	}
+
+
+    public void testLoadCustomDdl() {
+        final EmbeddedDbTester embeddedDb = new EmbeddedDbTester();
+
+        DatabaseCreator creator = new DatabaseCreator();
+        creator.loadDdl("DatabaseCreatorTest.ddl");
+
+        embeddedDb.createCheckerForSelect("select * from new_custom_table")
+                .assertRowCount(0);
+        // shouldn't fail because of nonexistent table
+    }
 
 }
