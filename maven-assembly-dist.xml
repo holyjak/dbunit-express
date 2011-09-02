@@ -1,0 +1,28 @@
+<assembly>
+	<id>dist</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<includeSiteDirectory>false</includeSiteDirectory>
+
+	<fileSets>
+		<fileSet>
+			<!--directory>.</directory-->
+			<filtered>false</filtered>
+			<includes>
+				<include>testData/**</include>
+				<include>*.xml</include>
+				<include>*.txt</include>
+				<include>src/main/**</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+
+	<dependencySets>
+		<dependencySet>
+			<useProjectAttachments>false</useProjectAttachments>
+			<useTransitiveDependencies>false</useTransitiveDependencies>
+		</dependencySet>
+	</dependencySets>
+
+</assembly>

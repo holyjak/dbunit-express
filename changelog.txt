@@ -1,0 +1,62 @@
+VERSION 1.3.0 (Sep 2011)
+Cosmetic changes and minor improvements
+
+TODO copy changes from TODO
+
+(1) renamed project to dbunit-express (=> changed package to net.jakubholy.dbunitexpress)
+(2) upgraded to latest DbUnit (2.4.8, was 2.4.7)
+(3) added slf4j-simple to dependencies so that users don't need to do it - those who don't want it may just exclude it
+(4) When there is a FileNotFoundException for the ddl, report the working directory, check if testData/ self exists
+(5) Added comment to onTearDown() saying that it does nothing and thus doesn't need to be called, updated test classes accordingly
+(6) Added SimpleNonExtendingEmbeddedDbJUnit4Test to show usage with JUnit 4
+(7) Added setDataSet(String) that tries to find a file of the given name in testData/ or on the classpath and loads it
+(8) When it is detected in onSetup() that the test database likely isn't initialized, we advice to use Db Creator and report the current working directory
+(9) 
+
+VERSION 1.2.0 (Apr 2010)
+A major upgrade release:
+(1) Upgraded to DbUnit 2.4.7
+	- includes migration to SLF4j for logging
+(2) Various improvements:
+	- RowComparator made fluent - all assert* now return this so that calls can be chained
+	- createDataSetFromFile modified to search on the calling class' classpath
+		=> data set file may be next to a test class
+	- replaceDatabase: added logging of duplicated PKs for easier troubleshooting
+	- improved JavaDoc, improved logging
+	- Improved error reporting, e.g. when the derby db is locked by another process, for failed DB startup
+	- Fixed broken DatabaseCreator
+	- Added few utility methods to the *TestCase (getSqlConnection) and EmbeddedDbTester (setConn.Prop., resolveConn.Prop., getSqlConnection)
+	- Addedd RowComparator.withErrorMessage and, .withOneTimeErrorMessage and more unit tests
+	- RowComparator: a custom check other than .equals can be done in the RowComparator's assertNext
+		by passing a value of the type ValueChecker
+	- RowComparator: added assertNext(.., String[]) to make the possibility of type-insensitive comparison clear + appropriate JavaDoc update
+
+VERSION 1.1.0 (Feb 2010)
+This is a major reorganization and feature release:
+(1) All functionality moved to EmbeddedDbTester so that extending the AbstractEmbeddedDbTestCase
+	isn't necessary anymore, which is useful e.g. in JUnit 4 or when extending another JUnit
+	derivation. It's also a standard DbUnit's IDatabaseTester.
+(2) It's now possible to change completely the DB used by defining some JDBC
+	properties in dbunit-express.properties
+(3) Added utility methods getDataSource, getSqlConnection and a convenience method
+	createCheckerForSelect, some of those implemented in  the EnhancedDatabaseTesterDecorator
+	so that they can be added to any IDatabaseTester.
+(4) Switched from Java util logging to commons-logging for better configurability.
+
+VERSION 1.0.2 (Nov 2009)
+This is a minor feature release:
+(1) Added the method replaceDatabase(IDataSet) to the abstract parent test
+to make it easier to define new data for a method
+(2) Added there the method clearTable(tableName) so that you can delete
+all rows from a particular table and thus test that the tested class can handle
+an empty table
+(3) Updated the sample test case with examples of those new methods
+(4) Added the nested class RowComparator to make checking of the final data easier.
+
+VERSION 1.0.1
+This is a minor feature release, I've only added the method replaceDatabase to the abstract parent test
+to make it possible to replace the content of the test database from a data set file at the
+beginning of a test method that requires other data than the default ones.
+
+See the project's wiki page for more info about this (sub-)project and the methods JavaDoc for
+info about usage.

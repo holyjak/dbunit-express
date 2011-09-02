@@ -1,0 +1,9 @@
+target/
+testData/testDB
+.idea/
+.pmd
+./dbunit-express.iml
+./src/main/Main.iml
+./src/test/java/test.iml
+./src/test/Test.iml
+dbunit-express.iml

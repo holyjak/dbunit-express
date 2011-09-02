@@ -1,0 +1,54 @@
+HOWTO DEPLOY OR RELEASE THE PROJECT
+
+### DEPLOYING TO MAVEN REPO ###
+
+See http://jroller.com/holy/entry/releasing_a_project_to_maven
+
+1. PERFORMING A RELEASE
+ We use the Maven release plugin to perform releases. It creates a new tag in SVN, updates the project's
+ version (removing -SNAPSHOT for deployment and adding it back with version 1 higher after that) etc.
+ See comments in the pom.xml for details.
+
+ TODO - release broken, problems with SVN:
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+[INFO] Executing: svn --non-interactive copy --file /tmp/maven-scm-131526265.commit . https://jeeutils.svn.sourceforge.net/svnroot/jeeutils/tags/dbunit-expressderby-parenttest-1.2.0
+[INFO] Working directory: /home/jholy/Private/development/projekty/cd-software2carry/devel/jeeutils/trunk/DbUnitTestSkeleton
+
+[INFO] ------------------------------------------------------------------------
+[ERROR] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Unable to tag SCM
+Provider message:
+The svn tag command failed.
+Command output:
+svn: Commit failed (details follow):
+svn: File '/svnroot/jeeutils/tags/dbunit-embeddedderby-parenttest-1.2.0/src/main/java/net/jakubholy/testing/dbunit/embeddeddb/AbstractEmbeddedDbTestCase.java' already exists
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ TBD: Correct JavaDoc warnings
+
+
+2. DEPLOYING NEW FILE VERSIONS W/O DOING A RELEASE
+ You can also deploy a new version to the target maven repository without performing a release by executing
+
+ mvn deploy -DperformRelease=true -Dgpg.passphrase=****
+
+ The confusing option performRelease=true is necessary for generating gpg singatures (normally it's set by the release plugin)
+
+ This will build the project and deploy the artifacts to the Sonatype's staging repository
+ (you need yet to close and promote the repo. to get them into the public release repository
+ and synchronized to Maven Centra.)
+ The three options are necessary for generating and deploying also GPG signatures.
+
+### DEPLOYING TO SOURCEFORGE.NET ###
+1. Login to sf.net > Develop > Project Admin > File Manager
+2. Create the release folder: l-click on the tooth wheel next to the folder DbUnitTestSkeleton
+	> New folder named after the release (e.g. 1.1.0)
+3. Upload release notes: l-click on the tooth wheel next to the release folder (1.1.0) > Upload here
+4. Mark the release notes as release notes: l-click on the tooth wheel next to them > Properties > check Release notes
+5. Set the release notes as release notes for the folder:
+	click on the release folder (1.1.0) and in the Folder Details box select them
+	as the Release notes for this folder
+6. Upload all the artifacts (in the form like dbunit-embeddedderby-parenttest-1.1.0.jar
+7. Mark the .zip as the default download for any platform:
+	l-click on the tooth wheel next to it > Properties > mark all the checkboxes, save
+8. Publish news about the new release: from the Summary page: Develop > Develop's submenu News > Submit, with title like "Released DbUnit Test Skeleton 1.1.0"
