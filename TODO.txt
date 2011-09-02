@@ -5,7 +5,5 @@ TODO
 - run DB creator if no DB found ?
 
 - consider making data set used configurable
-
-- consider moving to git ?
 - consider merging parts of this directly into DbUnit (getDataSource, RowComparator)
 - Make it easy to use the data-set-per-test-class strategy e.g. by providing a suitable testDb factory method

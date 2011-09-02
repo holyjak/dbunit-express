@@ -212,13 +212,34 @@ public class EmbeddedDbTester implements IDatabaseTester {
      */
     public static final String CUSTOM_CONFIG_FILE = "dbunit-express.properties";
 
-    private final Properties connectionProps;	// NOPMD
+    private String customConfigFile = CUSTOM_CONFIG_FILE;
+
+    private Properties connectionProps;	// NOPMD
 
 	private transient DatabaseOperation setUpOperation = DatabaseOperation.CLEAN_INSERT;
 
 	private transient DatabaseOperation tearDownOperation = DatabaseOperation.NONE;
 
 	private IExceptionInterpreter exceptionInterpreter;
+
+    /** For testing only. */
+    static EmbeddedDbTester withPropertiesFile(String propertiesFileOnPath, String dataSet) {
+        EmbeddedDbTester testDb = new EmbeddedDbTester(propertiesFileOnPath, dataSet);
+        return testDb;
+    }
+
+    private EmbeddedDbTester(String configProperties, String xmlFileName) {
+        if (configProperties != null) {
+            this.customConfigFile = configProperties;
+        }
+
+        if (xmlFileName != null) {
+            setDataSet(xmlFileName);
+        }
+
+        connectionProps = loadConnectionConfig();
+        exceptionInterpreter = ExceptionInterpreterFactory.getDefaultInterpreter();
+    }
 
     /**
      * Create a new embedded DB tester ready to use, optionally configured by
@@ -229,8 +250,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
      * to modify or read the test database.
      */
     public EmbeddedDbTester() {
-    	connectionProps = loadConnectionConfig();
-    	exceptionInterpreter = ExceptionInterpreterFactory.getDefaultInterpreter();
+        this(null, null);
     }
 
     /**
@@ -248,8 +268,8 @@ public class EmbeddedDbTester implements IDatabaseTester {
      * @see #setDataSet(String)
      */
     public EmbeddedDbTester(final String xmlFileName) throws DatabaseUnitRuntimeException {
-    	this();
-    	setDataSet(xmlFileName);
+    	this(null, xmlFileName);
+
     }
 
 	/**
@@ -257,11 +277,12 @@ public class EmbeddedDbTester implements IDatabaseTester {
 	 * if available. Fail-safe.
 	 * @return the loaded properties (empty if not found or an exception occurred)
 	 */
-	private static Properties loadConnectionConfig() {
+	private Properties loadConnectionConfig() {
 		final Properties properties = new Properties();
 		final URL configUrl = EmbeddedDbTester.class.getResource(
-    			"/" + CUSTOM_CONFIG_FILE);
-    	if (configUrl != null) {
+                "/" + customConfigFile);
+
+        if (configUrl != null) {
     		LOG.info("Loading test DB configuration from " + configUrl);
     		try {
 				properties.load( configUrl.openStream() );
@@ -464,39 +485,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
     public final IDataSet createDataSetFromFile(final String xmlFileName)
     throws DatabaseUnitRuntimeException, DataSetException {
 
-    	if (xmlFileName == null) {
-    		throw new IllegalArgumentException("String xmlFileName may not be null");
-    	}
-
-    	InputStream dataSetStream;
-
-    	final String defaultPath =
-    		TEST_DATA_FOLDER + File.separator + xmlFileName;
-    	final File defaultFile = new File(defaultPath);
-
-    	if (defaultFile.canRead()) {
-    		try {
-				dataSetStream = new FileInputStream( defaultFile );
-				LOG.info("createDataSetFromFile: Loading a data set from the " +
-						"file {} (found in the default location)"
-						, defaultFile.getAbsolutePath());
-			} catch (FileNotFoundException e) {
-				// this should not happen for we tested defaultFile.canRead()
-				throw new DatabaseUnitRuntimeException(e);
-			}
-    	} else {
-    		final URL dataSetOnCpUrl = findOnClasspath(xmlFileName, defaultPath);
-			try {
-				dataSetStream = dataSetOnCpUrl.openStream();
-				LOG.info("createDataSetFromFile: Loading a data set from " +
-						"the file {} found on the classpath at {}"
-						, xmlFileName, dataSetOnCpUrl);
-			} catch (IOException e) {
-				throw new DatabaseUnitRuntimeException(
-						"createDataSetFromFile: Failed to read the file " +
-						dataSetOnCpUrl, e);
-			}
-    	}
+        InputStream dataSetStream = findConfigFile(xmlFileName);
 
     	final XmlDataSet result = new XmlDataSet(dataSetStream);
 
@@ -515,7 +504,54 @@ public class EmbeddedDbTester implements IDatabaseTester {
     	return result;
     }
 
-	/**
+    /**
+     * Try to find a file in all locations: in the testData/folder,
+     * co-located with the calling class, on system classpath.
+     * <p>
+     *     Usually used to locate a data set file.
+     * </p>
+     * @param xmlFileName (required)
+     * @return stream opened for the file
+     * @trows DatabaseUnitRuntimeException when not found
+     */
+    public InputStream findConfigFile(String xmlFileName) throws DatabaseUnitRuntimeException {
+        if (xmlFileName == null) {
+            throw new IllegalArgumentException("String xmlFileName may not be null");
+        }
+
+        InputStream dataSetStream;
+
+        final String defaultPath =
+            TEST_DATA_FOLDER + File.separator + xmlFileName;
+        final File defaultFile = new File(defaultPath);
+
+        if (defaultFile.canRead()) {
+            try {
+                dataSetStream = new FileInputStream( defaultFile );
+                LOG.info("findConfigFile: Loading " +
+                        "file {} (found in the default location)"
+                        , defaultFile.getAbsolutePath());
+            } catch (FileNotFoundException e) {
+                // this should not happen for we tested defaultFile.canRead()
+                throw new DatabaseUnitRuntimeException(e);
+            }
+        } else {
+            final URL dataSetOnCpUrl = findOnClasspath(xmlFileName, defaultPath);
+            try {
+                dataSetStream = dataSetOnCpUrl.openStream();
+                LOG.info("findConfigFile: Loading " +
+                        "the file {} found on the classpath at {}"
+                        , xmlFileName, dataSetOnCpUrl);
+            } catch (IOException e) {
+                throw new DatabaseUnitRuntimeException(
+                        "findConfigFile: Failed to find the file " +
+                        dataSetOnCpUrl, e);
+            }
+        }
+        return dataSetStream;
+    }
+
+    /**
 	 * Find a data set file on the class-path or fail.
 	 * @param xmlFileName (required) the file to search for
 	 * @param defaultPath (required) the location where the file was looked for

@@ -11,7 +11,7 @@ TODO copy changes from TODO
 (6) Added SimpleNonExtendingEmbeddedDbJUnit4Test to show usage with JUnit 4
 (7) Added setDataSet(String) that tries to find a file of the given name in testData/ or on the classpath and loads it
 (8) When it is detected in onSetup() that the test database likely isn't initialized, we advice to use Db Creator and report the current working directory
-(9) 
+(9) Added method findConfigFile(name) to simplify custom DataSet creation
 
 VERSION 1.2.0 (Apr 2010)
 A major upgrade release:

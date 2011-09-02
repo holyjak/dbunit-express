@@ -11,12 +11,21 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 import net.jakubholy.dbunitexpress.AbstractEmbeddedDbTestCase;
+import net.jakubholy.dbunitexpress.EmbeddedDbTester;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Simple verification of some of the possible errors.
  *
  */
-public class DerbyExceptionInterpreterTest extends AbstractEmbeddedDbTestCase {
+public class DerbyExceptionInterpreterTest {
+
+    private EmbeddedDbTester testDb = new EmbeddedDbTester();
 
 	static {
 		// Decrease lock timeout from 20 to the min. of 1 second so that
@@ -28,18 +37,18 @@ public class DerbyExceptionInterpreterTest extends AbstractEmbeddedDbTestCase {
 
 	private DerbyExceptionInterpreter interpreter;
 
-	/* (non-Javadoc)
-	 * @see junit.framework.TestCase#setUp()
-	 */
-	protected void setUp() throws Exception {
-		super.setUp();
+    @Before
+	public void setUp() throws Exception {
+		testDb.onSetup();
 		interpreter = new DerbyExceptionInterpreter();
 	}
 
+    @Ignore("slow - 60s")
+    @Test
 	public void testThatLockedTableDetected() throws Exception {
 
 		// PREPARE
-		final Connection connection = getSqlConnection();
+		final Connection connection = testDb.getSqlConnection();
 		// Forbid autocommit so that lock will be retained until commit/rollback
 		connection.setAutoCommit(false);
 		try {
@@ -49,7 +58,7 @@ public class DerbyExceptionInterpreterTest extends AbstractEmbeddedDbTestCase {
 			// TEST
 			// Execute query - shall time out because of a write lock on the table
 			try {
-				getEmbeddedDbTester().getConnection().createQueryTable(
+				testDb.getConnection().createQueryTable(
 					"lockedTable", "select * from my_test_schema.my_test_table");
 				fail("Should have failed because the table is locked due to an " +
 						"uncommited update transaction.");
