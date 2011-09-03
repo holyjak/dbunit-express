@@ -151,6 +151,44 @@ public class DatabaseCreatorTest extends TestCase {
 
         embeddedDb.createCheckerForSelect("select * from new_custom_table")
                 .assertRowCount(0);
+        assertTableCreated(embeddedDb, "new_custom_table");
+    }
+
+    public void test_can_load_ddl_into_existing_db() {
+        final EmbeddedDbTester inMemoryEmbeddedDb = EmbeddedDbTester.withPropertiesFile(
+                "dbex-derby_in_memory.properties", null);
+        DatabaseCreator dbCreator = new DatabaseCreator(inMemoryEmbeddedDb);
+        // Notice we don't execute DB creation - the in-memory DB is self-creating because our conn. string already
+        // contains ;create=true
+        dbCreator.loadDdl("DatabaseCreatorTest-additional2.ddl");
+
+        assertTableCreated(inMemoryEmbeddedDb, "new_custom_table2");
+    }
+
+    public void test_can_initialize_db_with_custom_ddl() throws Exception {
+        final EmbeddedDbTester inMemoryEmbeddedDb = EmbeddedDbTester.withPropertiesFile(
+                "dbex-derby_in_memory-non_selfcreating.properties", null);
+        DatabaseCreator dbCreator = new DatabaseCreator(inMemoryEmbeddedDb);
+
+        // The in-memory DB shouldn't exist right now, let's verify it
+        try {
+            inMemoryEmbeddedDb.getConnection();
+            fail("Should have failed because the test db shouldn't have been created yet");
+        } catch (DatabaseUnitRuntimeException e) {}
+
+        // Create it ...
+        dbCreator.setDdlFile("DatabaseCreatorTest-additional2.ddl")
+                .doCreateAndInitializeTestDb();
+
+        // Verify that now it is ok
+        assertTableCreated(inMemoryEmbeddedDb, "new_custom_table2");
+    }
+
+    //############################################################################
+
+    private void assertTableCreated(EmbeddedDbTester embeddedDb, String tableName) {
+        embeddedDb.createCheckerForSelect("select * from " + tableName)
+                .assertRowCount(0);
         // shouldn't fail because of nonexistent table
     }
 

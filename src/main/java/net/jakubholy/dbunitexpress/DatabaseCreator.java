@@ -10,7 +10,6 @@ package net.jakubholy.dbunitexpress;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -50,9 +49,25 @@ public class DatabaseCreator {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DatabaseCreator.class);
 
-    private static final DatabaseCreator instance = new DatabaseCreator();
+    private static final DatabaseCreator defaultInstance = new DatabaseCreator();
 
     private URL ddlFile = fileToUrl(DDL_FILE_PATH);
+
+    // Get a tester that we will use to access the DB;
+    // thus we're sure we access the same DB the tests will access
+    final EmbeddedDbTester embeddedDb;
+
+    DatabaseCreator(EmbeddedDbTester embeddedDb) {
+        this.embeddedDb = embeddedDb;
+    }
+
+    /**
+     * It is useful to construct an instance if you want to read from a custom
+     * DDL file via {@link #setDdlFile(String)}.
+     */
+    public DatabaseCreator() {
+        this(new EmbeddedDbTester());
+    }
 
     private static URL fileToUrl(String ddlFilePath) {
         try {
@@ -80,14 +95,19 @@ public class DatabaseCreator {
 	 * @throws Exception
 	 */
     public static void createDbSchemaFromDdl(final Connection connection) throws FileNotFoundException, IOException, Exception, SQLException {
+        defaultInstance.doCreateDbSchemaFromDdl(connection);
+    }
+
+    /** @see #createDbSchemaFromDdl(java.sql.Connection) */
+    public void doCreateDbSchemaFromDdl(final Connection connection) throws FileNotFoundException, IOException, Exception, SQLException {
     	if (connection == null) {
     		throw new IllegalArgumentException("The argument connection: java.sql.Connection may not be null.");
     	}
         LOG.info("createDbSchemaFromDdl: Going to initialize the test DB by creating the schema there...");
-        final String sql = instance.readDdlFromFile();
+        final String sql = readDdlFromFile();
 
         LOG.info("createDbSchemaFromDdl: DDL read: " + sql);
-		instance.executeDdl(connection, sql);
+		executeDdl(connection, sql);
 
         LOG.info("createDbSchemaFromDdl: done");
     } /* createDbSchemaFromDdl */
@@ -187,41 +207,25 @@ public class DatabaseCreator {
      */
 	public static void createAndInitializeTestDb() throws Exception,
 			FileNotFoundException, IOException, SQLException {
+        defaultInstance.doCreateAndInitializeTestDb();
+    }
 
-		// Get a tester that we will use to access the DB;
-    	// thus we're sure we access the same DB the tests will access
-    	final EmbeddedDbTester embeddedDb = new EmbeddedDbTester();
+    /**
+     * @see #createAndInitializeTestDb()
+     */
+	public void doCreateAndInitializeTestDb() throws Exception,
+			FileNotFoundException, IOException, SQLException {
+        final IDatabaseConnection dbUnitConnection = produceDbCreatingConnection();
 
-    	// Modify the DB URL to tell Derby to create the DB if not existing
-    	final String oldDbConnUrl = embeddedDb.resolveConnectionProperty(
-    			PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL );
-
-    	if (oldDbConnUrl == null) {
-    		// This shouldn't happen but let's be safe...
-    		throw new IllegalStateException("The required property " +
-    				PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL +
-    				" is not set (yet).");
-    	}
-
-    	// Create st. like "jdbc:derby:testData/testDB;create=true"
-    	final String selfCreatingDbConnUrl = oldDbConnUrl + ";create=true"; // not very foolproof...
-
-    	embeddedDb.setConnectionProperty(
-    			PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL
-    			, selfCreatingDbConnUrl);
-
-		// Get a connection - the connection properties will be applied now
-    	final IDatabaseConnection dbUnitConnection =
-    		embeddedDb.createAndInitDatabaseTester().getConnection();
-
-    	// Initialize the DB content
+        // Initialize the DB content
     	try {
-    		DatabaseCreator.createDbSchemaFromDdl( dbUnitConnection.getConnection() );
+    		this.doCreateDbSchemaFromDdl(dbUnitConnection.getConnection());
     	} catch (SQLException e) {
     		final String msg = "DDL execution failed. DB URL: '"
-    				+ selfCreatingDbConnUrl + "' (created in the current work dir: " +
+    				+ embeddedDb.resolveConnectionProperty(PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL ) +
+                    "' (created in the current work dir: " +
     				System.getProperty("user.dir") + "). DDL file: " +
-    				instance.getDdlFile();
+    				getDdlFile();
 			LOG.error("createAndInitializeTestDb" + msg, e);
     		throw new DatabaseCreatorFailure(msg, e);
     	} finally {
@@ -233,15 +237,54 @@ public class DatabaseCreator {
     	}
 	} /* createAndInitializeTestDb */
 
-    /** Experimental method - load an additional DDL. */
+    /**
+     * Modify the current embeddedDb's connection to automatically create the target databse if
+     * it doesn't exist.
+     * Works for Derby on-disk and in-memory databases only.
+     *
+     * @return connection to the DB
+     * @throws Exception
+     */
+    private IDatabaseConnection produceDbCreatingConnection() throws Exception {
+        // Modify the DB URL to tell Derby to create the DB if not existing
+        final String oldDbConnUrl = embeddedDb.resolveConnectionProperty(
+                PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL );
+
+        if (oldDbConnUrl == null) {
+            // This shouldn't happen but let's be safe...
+            throw new IllegalStateException("The required property " +
+                    PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL +
+                    " is not set (yet).");
+        }
+
+        // Create st. like "jdbc:derby:testData/testDB;create=true"
+        final String selfCreatingDbConnUrl = oldDbConnUrl + ";create=true"; // not very foolproof...
+
+        embeddedDb.setConnectionProperty(
+                PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL
+                , selfCreatingDbConnUrl);
+
+        // Get a connection - the connection properties will be applied now
+        return embeddedDb.createAndInitDatabaseTester().getConnection();
+    }
+
+    /**
+     * Load an additional DDL into the database.
+     * It can be co-located with the calling test class, on the classpath, or in the
+     * default testData/ folder.
+     *
+     * @param ddlFile (required) name of the ddlFile
+     *
+     * @since 1.3.0
+     */
     public void loadDdl(String ddlFile) throws DatabaseUnitRuntimeException {
         setDdlFile(ddlFile);
-        final EmbeddedDbTester embeddedDb = new EmbeddedDbTester();
+
         try {
             final IDatabaseConnection dbUnitConnection =
                 embeddedDb.createAndInitDatabaseTester().getConnection();
 
-            executeDdl(dbUnitConnection.getConnection(), readDdlFromFile());
+            doCreateDbSchemaFromDdl(dbUnitConnection.getConnection());
         } catch (Exception e) {
             throw new DatabaseUnitRuntimeException("Failed to load DDL from file " + ddlFile
                     , e);
@@ -251,11 +294,15 @@ public class DatabaseCreator {
     /**
      * Use the given DDL file found in the default location or on the classpath
      * (co-located with the calling class or at its root).
+     *
      * @param ddlFile (required)
+     * @return this
+     *
      * @see #loadDdl(String) 
      */
-    private void setDdlFile(String ddlFile) {
-        this.ddlFile = EmbeddedDbTester.findConfigFile(ddlFile);;
+    public DatabaseCreator setDdlFile(String ddlFile) {
+        this.ddlFile = EmbeddedDbTester.findConfigFile(ddlFile);
+        return this;
     }
 
     private static class DatabaseCreatorFailure extends RuntimeException {

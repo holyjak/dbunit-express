@@ -2,8 +2,9 @@ TODO
 
 - !!! COPY CHANGES TO CHANGELOG !!!
 
-- run DB creator if no DB found ?
+- wiki: custom EmbeddedDbTester subclass for own data set location strategy etc.
 
+- run DB creator if no DB found ?
 - consider making data set used configurable
 - consider merging parts of this directly into DbUnit (getDataSource, RowComparator)
 - Make it easy to use the data-set-per-test-class strategy e.g. by providing a suitable testDb factory method
