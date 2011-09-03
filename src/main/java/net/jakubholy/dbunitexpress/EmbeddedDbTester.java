@@ -52,6 +52,8 @@ import org.slf4j.LoggerFactory;
  * <p>
  * You will want to use this class if you prefer not to subclass the
  * {@link AbstractEmbeddedDbTestCase}, for instance if using Junit 4.
+ * Under JUnit 4 you may actually prefer to use {@link EmbeddedDbTesterRule} instead of this
+ * because it calls {@link #onSetup} automatically, see the example in its JavaDoc.
  * <p>
  * The class uses an embedded Derby DB for test data.
  * The necessary tables must be already created
@@ -221,7 +223,11 @@ public class EmbeddedDbTester implements IDatabaseTester {
 
 	private IExceptionInterpreter exceptionInterpreter;
 
-    /** For testing only. */
+    /**
+     * For testing only.
+     * @param propertiesFileOnPath (optional)
+     * @param dataSet (optional)
+     */
     static EmbeddedDbTester withPropertiesFile(String propertiesFileOnPath, String dataSet) {
         EmbeddedDbTester testDb = new EmbeddedDbTester(propertiesFileOnPath, dataSet);
         return testDb;
@@ -698,6 +704,10 @@ public class EmbeddedDbTester implements IDatabaseTester {
 	/**
      * Initiate the database by clearing tables and filling them with data from the data set.
      * Only tables that are mentioned in the data set are cleared of data.
+     * <p>
+     *     Under JUnit 4 you may prefer to use {@link EmbeddedDbTesterRule} instead of this
+     *     class because it calls onSetup automatically, see the example in its JavaDoc.
+     * </p>
      * <p>
      * The default set up operation and test data sets are used unless you
      * they have been changed via their setters (only rarely needed)

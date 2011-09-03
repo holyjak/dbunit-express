@@ -1,0 +1,10 @@
+<dataset>
+	<table name="my_test_schema.my_test_table">
+	        <column>id</column>
+	        <column>some_text</column>
+	        <row>
+	            <value>1</value>
+	            <value>EmbeddedDbTesterRuleTest data</value>
+	        </row>
+	</table>
+</dataset>
