@@ -270,7 +270,9 @@
 					(only needed for releases, during development we
 					may compile with any JVM available - which is actually
 					good because thus we know it builds under newer JVMs too)
-					-->
+
+                    DISABLED - latest maven doesn't run under JVM 1.4 :-(
+					- ->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-enforcer-plugin</artifactId>
@@ -293,7 +295,7 @@
 								</configuration>
 							</execution>
 						</executions>
-					</plugin>
+					</plugin-->
 
 					<!-- Publish also javadocs when releasing - required by Sonatype -->
 					<plugin>

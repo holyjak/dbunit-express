@@ -561,7 +561,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
     }
 
     /**
-	 * Find a data set file on the class-path or fail.
+	 * Find a data set file on the class-path or fail..
 	 * @param xmlFileName (required) the file to search for
 	 * @param defaultPath (required) the location where the file was looked for
 	 * 	originally (for logging)
