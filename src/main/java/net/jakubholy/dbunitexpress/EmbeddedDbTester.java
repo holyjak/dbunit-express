@@ -223,6 +223,9 @@ public class EmbeddedDbTester implements IDatabaseTester {
 
 	private IExceptionInterpreter exceptionInterpreter;
 
+    private final boolean autoInitializeDb;
+    private static boolean autoInitializeDbDone = false;
+
     /**
      * For testing only.
      * @param propertiesFileOnPath (optional)
@@ -244,6 +247,8 @@ public class EmbeddedDbTester implements IDatabaseTester {
 
         connectionProps = loadConnectionConfig();
         exceptionInterpreter = ExceptionInterpreterFactory.getDefaultInterpreter();
+
+        autoInitializeDb = Boolean.valueOf(connectionProps.getProperty("dbunit-express.autoInitializeDb", "false"));
     }
 
     /**
@@ -718,6 +723,26 @@ public class EmbeddedDbTester implements IDatabaseTester {
      * @see org.dbunit.DatabaseTestCase#setUp()
      */
     public void onSetup() throws Exception {	// NOPMD
+
+        if (autoInitializeDb && !autoInitializeDbDone) {
+            boolean dbExists;
+            try {
+                createCheckerForSelect("select * from sys.SYSSCHEMAS where SCHEMANAME='noSuchSchema'")
+                    .assertRowCount(0); // should fail because of non-exist. table if DB not initialized
+                dbExists = true;
+            } catch (Exception e) {
+                dbExists = false;
+            }
+
+            if (!dbExists) {
+                LOG.info("Going to automatically create the test database ...");
+                DatabaseCreator.createAndInitializeTestDb();
+            }
+            
+            autoInitializeDbDone = true;
+        }
+
+
         try {
             final IDatabaseTester databaseTester = getWrappedTester();
             Assert.assertNotNull( "DatabaseTester is not set", databaseTester );

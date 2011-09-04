@@ -106,7 +106,7 @@ public class DatabaseCreator {
         LOG.info("createDbSchemaFromDdl: Going to initialize the test DB by creating the schema there...");
         final String sql = readDdlFromFile();
 
-        LOG.info("createDbSchemaFromDdl: DDL read: " + sql);
+        LOG.debug("createDbSchemaFromDdl: DDL read: " + sql);
 		executeDdl(connection, sql);
 
         LOG.info("createDbSchemaFromDdl: done");

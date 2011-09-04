@@ -28,19 +28,20 @@ public class DatabaseCreatorTest extends TestCase {
 	 */
 	public void testCreateAndInitializeTestDb() throws Exception {
 
+        LOG.info("RUNNING TEST testCreateAndInitializeTestDb");
+
+        // Clean up before the test - needed when not fresh run
 		shutdownTestDb();
+		deleteTmpTestDB();
 
-		deleteTestDb();
-
-		final EmbeddedDbTester embeddedDb = new EmbeddedDbTester();
+		final EmbeddedDbTester embeddedDb = EmbeddedDbTester.withPropertiesFile("dbunit-express-tmpTestDB.properties", null);
 
 		assertTestDbDoesntExist(embeddedDb);
 
-		DatabaseCreator.createAndInitializeTestDb();
+		new DatabaseCreator(embeddedDb).doCreateAndInitializeTestDb();
 
 		// Verify the DB does exist now
 		embeddedDb.getConnection();
-
 	}
 
     /**
@@ -69,21 +70,23 @@ public class DatabaseCreatorTest extends TestCase {
 
 	/**
 	 * Fail if the test DB exists.
-	 * @param embeddedDb
 	 * @throws Exception
+     * @param embeddedDb
 	 */
-	private void assertTestDbDoesntExist(final EmbeddedDbTester embeddedDb)
+	private void assertTestDbDoesntExist(EmbeddedDbTester embeddedDb)
 			throws Exception {
 		try {
-			final IDatabaseConnection conn = embeddedDb.getConnection();
+            final IDatabaseConnection conn = embeddedDb.getConnection();
+            embeddedDb.createCheckerForSelect("select * from sys.SYSSCHEMAS where SCHEMANAME='noSuchSchema'")
+                    .assertRowCount(0); // should fail because of non-exist. table if DB not initialized
 			fail("The test DB seems to exist already even though this test " +
-					"should have deleted it before trying to (re)create it -" +
-					" guessing from the fact that connecting to it hasn't " +
-					"failed. Unfortunately " +
-					"this way of determining its existence is not reliable " +
-					"if some processes has left it previously in an " +
-					"inconsistent state and the loaded Derby classes are " +
-					"thus confused. The connection: " + conn);
+                    "should have deleted it before trying to (re)create it -" +
+                    " guessing from the fact that connecting to it hasn't " +
+                    "failed. Unfortunately " +
+                    "this way of determining its existence is not reliable " +
+                    "if some processes has left it previously in an " +
+                    "inconsistent state and the loaded Derby classes are " +
+                    "thus confused. \nThe connection: " + conn);
 		} catch (DatabaseUnitRuntimeException e) {
 			LOG.info("testCreateAndInitializeTestDb: OK - connecting to the " +
 					"DB failed as expected, which hopefully indicates that " +
@@ -98,8 +101,8 @@ public class DatabaseCreatorTest extends TestCase {
 	/**
 	 * Delete the test DB if it exists.
 	 */
-	private void deleteTestDb() {
-		final String testDbPath = EmbeddedDbTester.TEST_DATA_FOLDER + File.separator + "testDB";
+	private void deleteTmpTestDB() {
+		final String testDbPath = EmbeddedDbTester.TEST_DATA_FOLDER + File.separator + "tmpTestDB";
 		final File testDbFolder = new File(testDbPath);
 		if (testDbFolder.exists()) {
 			try {
@@ -109,14 +112,14 @@ public class DatabaseCreatorTest extends TestCase {
 							"method that should have deleted it has " +
 							"reported success");
 				} else {
-					LOG.debug("deleteTestDb: The existing test DB has been " +
+					LOG.debug("deleteTmpTestDB: The existing test DB has been " +
 						"deleted");
 				}
 			} catch (IOException e) {
 				fail("Failed to delete the test DB " + testDbFolder.getAbsolutePath() + ": " + e);
 			}
 		} else {
-			LOG.debug("deleteTestDb: The test DB doesn't exist, no need to delete it.");
+			LOG.debug("deleteTmpTestDB: The test DB doesn't exist, no need to delete it.");
 		}
 	}
 
@@ -142,19 +145,10 @@ public class DatabaseCreatorTest extends TestCase {
 		}
 	}
 
+    public void test_can_load_ddl_into_existing_db() throws Exception {
 
-    public void testLoadCustomDdl() {
-        final EmbeddedDbTester embeddedDb = new EmbeddedDbTester();
+        LOG.info("RUNNING TEST test_can_load_ddl_into_existing_db");
 
-        DatabaseCreator creator = new DatabaseCreator();
-        creator.loadDdl("DatabaseCreatorTest.ddl");
-
-        embeddedDb.createCheckerForSelect("select * from new_custom_table")
-                .assertRowCount(0);
-        assertTableCreated(embeddedDb, "new_custom_table");
-    }
-
-    public void test_can_load_ddl_into_existing_db() {
         final EmbeddedDbTester inMemoryEmbeddedDb = EmbeddedDbTester.withPropertiesFile(
                 "dbex-derby_in_memory.properties", null);
         DatabaseCreator dbCreator = new DatabaseCreator(inMemoryEmbeddedDb);
@@ -166,6 +160,9 @@ public class DatabaseCreatorTest extends TestCase {
     }
 
     public void test_can_initialize_db_with_custom_ddl() throws Exception {
+
+        LOG.info("RUNNING TEST test_can_initialize_db_with_custom_ddl");
+
         final EmbeddedDbTester inMemoryEmbeddedDb = EmbeddedDbTester.withPropertiesFile(
                 "dbex-derby_in_memory-non_selfcreating.properties", null);
         DatabaseCreator dbCreator = new DatabaseCreator(inMemoryEmbeddedDb);
