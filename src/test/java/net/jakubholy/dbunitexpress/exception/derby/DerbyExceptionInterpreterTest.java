@@ -27,14 +27,6 @@ public class DerbyExceptionInterpreterTest {
 
     private EmbeddedDbTester testDb = new EmbeddedDbTester();
 
-	static {
-		// Decrease lock timeout from 20 to the min. of 1 second so that
-		// testThatLockedTableDetected() doesn't take so long
-		// Unfortunately it will apply also for any following test
-		System.setProperty("derby.locks.waitTimeout", "1");
-//		//System.setProperty("derby.locks.deadlockTimeout", "1");
-	}
-
 	private DerbyExceptionInterpreter interpreter;
 
     @Before
@@ -43,7 +35,6 @@ public class DerbyExceptionInterpreterTest {
 		interpreter = new DerbyExceptionInterpreter();
 	}
 
-    @Ignore("slow - 60s")
     @Test
 	public void testThatLockedTableDetected() throws Exception {
 
@@ -52,6 +43,7 @@ public class DerbyExceptionInterpreterTest {
 		// Forbid autocommit so that lock will be retained until commit/rollback
 		connection.setAutoCommit(false);
 		try {
+            connection.createStatement().execute("CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY('derby.locks.waitTimeout', '1')");
 			final Statement stmt = connection.createStatement();
 			stmt.executeUpdate("UPDATE my_test_schema.my_test_table SET some_text='abc' where id=3");
 
