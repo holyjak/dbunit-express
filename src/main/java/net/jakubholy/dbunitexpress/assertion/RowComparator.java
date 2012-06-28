@@ -441,6 +441,34 @@ public class RowComparator {
 		return this;
 	}
 
+
+
+    /**
+     * Print the actual results of the query, for troubleshooting. (It might be little slow.)
+     * @param sqlChecker
+     * @throws DataSetException
+     */
+    public void printSqlResults() throws DataSetException {
+        ITable resultTable = this.getResultTable();
+        List<String> columns = new ArrayList<String>();
+        for (Column column : resultTable.getTableMetaData().getColumns()) {
+            columns.add(column.getColumnName());
+        }
+        StringBuilder tableCsv = new StringBuilder();
+
+        tableCsv.append(columns).append('\n');
+
+        for (int rowIdx = 0; rowIdx < resultTable.getRowCount(); rowIdx++) {
+            List<Object> values = new ArrayList<Object>(columns.size());
+            for (String column : columns) {
+                values.add(resultTable.getValue(rowIdx, column));
+            }
+            tableCsv.append(values).append('\n');
+        }
+
+        System.out.format("Select results:\n%s", tableCsv);
+    }
+
 	/**
 	 * A custom error message provided by the user,
 	 * it can be either one time only (applies to the following assert*)
