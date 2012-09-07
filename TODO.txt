@@ -12,3 +12,52 @@ TODO
 - onSetup: make the db initialized check cross-db, not just derby
 - net.jakubholy.dbunitexpress.assertion.RowComparator.assertRowCount(int): enable optional printing of the first N/all rows found, mention this in the error msg
 - RowComparator: add assertNextRow(Object... columnValue) // no way to pass a message aside of with*
+- DbCreator: make it possible to disable dumping of ddl to terminal or switch it off by default
+- RowComparator:
+  - add support for hamcrest matchers in addition to ValueChecker
+  - add methods to create some useful checkers, e.g. to convert BigDecimal to long (public static ValueChecker [big]num(long value))
+  - upon assertNext failure, include the whole row in the error msg
+  - "(row (starting from 0) 2, column 'monthly_views')" => "(row 2 [zero-based], column 'monthly_views', row=col1val,col2val,col3val,...)" (index explan., add data sample)
+  - unclear exc. if SQL returns diff. # cols than expected via nextRow(..): java.lang.IllegalArgumentException: columnNames.length (4) shall be same as expectedValues.length (3)
+- add support for setting 'http://www.dbunit.org/properties/datatypeFactory' to get rid of the warning and support for db-specific data types (built-in support for derby); see DataType factory at http://www.dbunit.org/properties.html
+- Better error msg for unreachable DB => at at net.jakubholy.dbunitexpress.EmbeddedDbTester.onSetup(EmbeddedDbTester.java:751) find out if root cause chain contains java.net.SocketException
+- EmbeddedDbTester: add protected getJdbcUrl() - for error logs etc.
+- Add built-in support for disabling DB tests if a property is set, see https://sourceforge.net/apps/mediawiki/jeeutils/index.php?title=DbUnit_Express#Disable_DbUnit_tests_when_a_system_property_is_set
+
+
+### Add interpreter for PostgreSQL (make sure used in RowComparator too)
+
+Exception interpretation:
+
+```catch (DatabaseUnitRuntimeException e) {
+            // Typical PSQLException: "<message> Position: 1768"
+            Matcher m = Pattern.compile("Position: (\\d+)").matcher(e.getMessage());
+            if (m.find()) {
+                int position = Integer.parseInt(m.group(1));
+                String positionInfo;
+                if (position > sql.length()) {
+                    positionInfo = " (The error is at the end of the SQL indicating a general error such as unbalanced parantheses)";
+                } else {
+                  String sqlBefore = sql.substring(0, position);
+                  String sqlAfter = sql.substring(position);
+
+                  String[] linesBefore = sqlBefore.split("\n");
+                  final int errorLineNr = linesBefore.length;
+                  final int errorColNr = linesBefore[errorLineNr - 1].length() + 1;
+
+                  System.err.format("SQL with an error at position %d:\n%s\n<ERROR HERE:>\n%s\n", position, sqlBefore, sqlAfter);
+                  String sqlBeforePart = sqlBefore.substring(max(0, position - 20));
+                  String sqlAfterPart = sqlAfter.substring(0, min(sqlAfter.length(), 20));
+                  String sqlErrorNeighbourhood = sqlBeforePart + "<ERR:>" + sqlAfterPart;
+
+                  positionInfo = " (Error at line " + errorLineNr + ", column " + errorColNr
+                  		+ ". SQL around the error position:'" + sqlErrorNeighbourhood
+                  		+ "'; see System.err for more)";
+                }
+                System.err.format("\n%s\n", sql);
+                throw new RuntimeException("SQL error: " + e.getMessage() + positionInfo, e);
+            }
+            throw e;
+        }
+```
+

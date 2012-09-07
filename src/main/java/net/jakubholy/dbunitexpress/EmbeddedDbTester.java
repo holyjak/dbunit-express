@@ -227,11 +227,11 @@ public class EmbeddedDbTester implements IDatabaseTester {
     private static boolean autoInitializeDbDone = false;
 
     /**
-     * For testing only.
-     * @param propertiesFileOnPath (optional)
+     * Create an instance reading DB connection and other properties from the given file instead of the default one.
+     * @param propertiesFileOnPath (optional) Name of a file on the classpath; ex.: 'custom-dbunit-express.properties'
      * @param dataSet (optional)
      */
-    static EmbeddedDbTester withPropertiesFile(String propertiesFileOnPath, String dataSet) {
+    public static EmbeddedDbTester withPropertiesFile(String propertiesFileOnPath, String dataSet) {
         EmbeddedDbTester testDb = new EmbeddedDbTester(propertiesFileOnPath, dataSet);
         return testDb;
     }
@@ -258,6 +258,8 @@ public class EmbeddedDbTester implements IDatabaseTester {
      * <p>
      * Do not forget to call its {@link #onSetup()} before using it in a test
      * to modify or read the test database.
+     * <p>
+     * @see #withPropertiesFile
      */
     public EmbeddedDbTester() {
         this(null, null);
@@ -276,6 +278,7 @@ public class EmbeddedDbTester implements IDatabaseTester {
      * 	either in the testData folder or anywhere on the classpath
      *
      * @see #setDataSet(String)
+     * @see #withPropertiesFile
      */
     public EmbeddedDbTester(final String xmlFileName) throws DatabaseUnitRuntimeException {
     	this(null, xmlFileName);

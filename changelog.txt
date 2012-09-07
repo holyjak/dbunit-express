@@ -1,7 +1,11 @@
-VERSION 1.3.0 (Sep 2011)
+VERSION 1.3.1 (In progress)
 Cosmetic changes and minor improvements
 
-TODO copy changes from TODO
+(1) Made withPropertiesFile public to enable multiple instances with diff. DB connection configuration
+
+
+VERSION 1.3.0 (Sep 2011)
+Cosmetic changes and minor improvements
 
 (1) renamed project to dbunit-express (=> changed package to net.jakubholy.dbunitexpress)
 (2) upgraded to latest DbUnit (2.4.8, was 2.4.7)

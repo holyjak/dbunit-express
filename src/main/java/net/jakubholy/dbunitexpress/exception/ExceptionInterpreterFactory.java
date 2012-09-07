@@ -57,7 +57,7 @@ public final class ExceptionInterpreterFactory {
 		if (driverClass.getName().startsWith("org.apache.derby.")) {
 			return new DerbyExceptionInterpreter();
 		} else {
-			LOG.info("getInterpreter({}): unknown driver, returning the " +
+			LOG.info("getInterpreter({}): interpreter for excetions of this driver hasn't been defined yet, returning the " +
 					"dummy interpreter"
 					, driverClass);
 			return dummyInterpreter;
