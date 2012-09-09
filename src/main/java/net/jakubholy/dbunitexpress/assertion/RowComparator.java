@@ -7,6 +7,8 @@
 
 package net.jakubholy.dbunitexpress.assertion;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.sql.SQLException;
 
 import junit.framework.Assert;
