@@ -7,13 +7,13 @@ public class ExampleJUnit4WithRuleTest {
 
 	/**
 	 * Initialize the test and instruct it to use a custom data set file instead of the default dbunit-test_data_set.xml.
-	 * The set up of the test DB will be executed automaticaly thans to the magic of @Rule.
+	 * The set up of the test DB will be executed automaticaly thanks to the magic of @Rule.
 	 */
     @Rule
     public EmbeddedDbTesterRule testDb = new EmbeddedDbTesterRule("EmbeddedDbTesterRuleTest-data.xml");
 
     @Test
-    public void shold_execute_onSetup_automatically() throws Exception {
+    public void should_execute_onSetup_automatically() throws Exception {
     	// 1. TODO: Invoke the database-using class that you want to test, passing to it the test database
     	// via testDb.getDataSource() or testDb.getSqlConnection()
     	// ex.: new MyUserDao(testDb.getDataSource()).save(new User("Jakub", "Holy"));
