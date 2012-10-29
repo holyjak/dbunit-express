@@ -74,7 +74,8 @@ Note: you may prefer to download the *-dist.zip* file over the standard Maven do
 5. **Prepare test data**: Copy dbunit-express-\*-dist.zip/testData/[dbunit\-test\_data\_set.xml][0] into your new testData/ and modify it to fit your data needs. Any table mentioned in the file will be emptied prior to running test, if it has any rows defined than those will be also inserted.
     * You may use e.g. [Jailer][3] (good [tutorial][4]) to produce a subset of your database in DbUnit XML format (unfortunately only Flat XML) or another tool supporting it such as [QuantumDB][5].
 6. **Write a TestCase**: 
-    1.  JUnit 4.9+ - use preferably the EmbeddedDbTesterRule with @Rule and a public field so that onSetup is called automatically as in [ExampleJUnit4WithRuleTest.java][6] 
+    1.  JUnit 4.9+ - use preferably the EmbeddedDbTesterRule with @Rule and a public field so that onSetup is called automatically as in [ExampleJUnit4WithRuleTest.java][6] (but perhaps without passing
+        a custom data file to it)
     2.  JUnit 4.0 - 4.8: Use EmbeddedDbTester explicitly as in [SimpleNonExtendingEmbeddedDbJUnit4Test.java][7] 
     3.  JUnit 3.x: Subclass AbstractEmbeddedDbTestCase as in [SimpleEmbeddedDbTest.java][8] (or, if you can't subclass it, use dbunit-express in a stand-alone mode as in [SimpleNonExtendingEmbeddedDbJUnit3Test.java][9])  You may want to override its getDataSet() if you want to use st. else than testData/dbunit-test\_data\_set.xml (for example supplying data set produced by createDataSetFromFile(name)).
 7. **Run the test** 
