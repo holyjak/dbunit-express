@@ -20,7 +20,7 @@ DbUnit Express is a thin wrapper around DbUnit (unit testing of code interacting
 * Instructions for using them
 
  [2]: https://raw.github.com/jakubholynet/dbunit-express/master/testData/create_db_content.ddl "https://raw.github.com/jakubholynet/dbunit-express/master/testData/create_db_content.ddl"
- [0]: https://github.com/jakubholynet/dbunit-express/blob/master/testData/dbunit-test_data_set.xml
+ [0]: https://raw.github.com/jakubholynet/dbunit-express/master/testData/dbunit-test_data_set.xml
 
 Everything is well commented to help you to start using it quickly. 
 
