@@ -1,5 +1,9 @@
 TODO
 
+- onSetup with autoInitializeDb: the query doesn't work with in-mem Derby (i.e. >0 schemas) => enable explicit "check if created" query? This would also enable it for other DBs
+  Or f.ex. String defaultSchema = "SA"; ResultSet tables = getWrappedTester().getSqlConnection().getMetaData().getTables(null, defaultSchema, "%", new String[]{"TABLE"}); if (!tables.next()) do init
+            
+
 - Improve DbCreator logging - location in the .ddl not clear because it is split into 1 part per 1 stmt and comments are removed -> inclide the SQL or correctlocation
 
 - !!! COPY CHANGES TO CHANGELOG !!!
