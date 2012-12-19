@@ -316,18 +316,18 @@ It's best combined with a parent class common to all tests or a custom subclass 
            
                private static ddlExecuted = false;
                
-               public static ViaEmbeddedDbTester withFlatDataSet(String name) {
+               public static CustomEmbeddedDbTester withFlatDataSet(String name) {
                    return new CustomEmbeddedDbTester(name, true);
                
                }
-               public static ViaEmbeddedDbTester withXmlDataSet(String name) {
+               public static CustomEmbeddedDbTester withXmlDataSet(String name) {
                    return new CustomEmbeddedDbTester(name, false);
                }
                
                private CustomEmbeddedDbTester(String name, boolean flatXml) {
                    InputStream xml = EmbeddedDbTester.findConfigFileStream(name);
-                   DataSet ds = flatXml? new FlatXmlDataSetBuilder().build(xml) : new XmlDataSet(xml);
-                   super.setDataSet(ds dataSetType);
+                   IDataSet ds = flatXml? new FlatXmlDataSetBuilder().build(xml) : new XmlDataSet(xml);
+                   super.setDataSet(ds);
                    
                    // Init the DB if not done yet (assumes an in-memory DB):
                    if (!ddlExecuted) {
