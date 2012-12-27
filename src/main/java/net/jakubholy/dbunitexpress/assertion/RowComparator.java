@@ -21,6 +21,7 @@ import org.dbunit.DBTestCase;
 import org.dbunit.DatabaseTestCase;
 import org.dbunit.DatabaseUnitRuntimeException;
 import org.dbunit.IDatabaseTester;
+import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.Column;
 import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.DefaultTable;
@@ -140,7 +141,7 @@ public class RowComparator {
 
 		try {
 			exceptionInterpreter = ExceptionInterpreterFactory.getInterpreter(
-					databaseTester.getConnection().getConnection());
+					getConnection(databaseTester).getConnection());
 		} catch (Exception e) {
 			LOG.warn("initResultTableAndColumns: Failed to access the " +
 					"connection/metadata and thus will not be able to " +
@@ -148,7 +149,7 @@ public class RowComparator {
 		}
 
 		try {
-			final ITable resultTable = databaseTester.getConnection().
+			final ITable resultTable = getConnection(databaseTester).
 				createQueryTable("rowComparatorTbl", sql);
 			initResultTableAndColumns(resultTable);
 		} catch (Exception e) {
@@ -161,6 +162,11 @@ public class RowComparator {
 		}
 
 	} /* initResultTableAndColumns(String) */
+
+	/** Get a connection to the test database; subclasses may override. */
+    protected IDatabaseConnection getConnection(final IDatabaseTester databaseTester) throws Exception {
+        return databaseTester.getConnection();
+    }
 
 	/**
 	 * Set {@link #resultTable} and use its metadata to initialize {@link #columnNames}.
