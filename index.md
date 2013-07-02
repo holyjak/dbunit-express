@@ -111,6 +111,7 @@ The credentials for the connection are:
 
 Example DbUnit test code: 
 
+```java
     public class SimpleEmbeddedDbTest extends net.jakubholy.dbunitexpress.AbstractEmbeddedDbTestCase {
        public void testSomething() {
           // 1. Call the code that changes something in the DB
@@ -122,11 +123,13 @@ Example DbUnit test code:
           assertEquals(  actual, "some text #1, xml must be escaped like in & , >" )
        }.
     }
+```
 
 Notice that the database is cleared and loaded with test data automatically during the implicit call to setUp(). 
 
 Another complete test using JUnit 4 and Java 5+. You only need to create a .ddl and define test data in a XML (templates provided). 
 
+```java
     public class MyDerbyDbTest {
     
      // @Rule public EmbeddedDbTesterRule testDb = new EmbeddedDbTesterRule(); // with this you don't neet to call onSetup
@@ -142,6 +145,7 @@ Another complete test using JUnit 4 and Java 5+. You only need to create a .ddl 
        .assertRowCount(1)
        .assertNext(new Object[]{ 1, "Jakub Holy"});
     }}
+```
     
 
 See the two sample test classes provided with this project for more and more complex examples. 
@@ -174,10 +178,12 @@ If you have *dbunit-express.properties* on your classpath then dbunit-express wi
        ## Connection properties:
        #dbunit.driverClass=org.apache.derby.jdbc.EmbeddedDriver
        #dbunit.connectionUrl=jdbc:derby:testData/testDB
+       ##dbunit.connectionUrl=jdbc:derby:memory:myDb;create=true
        #dbunit.username=sa
        #dbunit.password=
        ## Should the DB be initialized automatically from the .ddl if the tables do not exist?
        ## (Works currently only for Derby)
+       ## Beware: Doesn't work for in-memory Derby in D.E. v1.3.0; do it manually
        #dbunit-express.autoInitializeDb=false
     
 
@@ -260,6 +266,7 @@ By default DbUnit Express expects you to use dataset `testData/dbunit-test\_data
 
 The easiest solution without repeating yourself is to create a custom subclass of `EmbeddedDbTester` that derives the name to use from the calling class and passes the data set name to the original tester: 
 
+```java
     public class PerTestDataSetEmbeddedDbTester extends EmbeddedDbTester/*Rule*/ {
         
         public PerTestDataSetEmbeddedDbTester() throws DatabaseUnitRuntimeException {
@@ -277,6 +284,7 @@ The easiest solution without repeating yourself is to create a custom subclass o
             throw new IllegalStateException("No calling class on the stack trace?!");
     	}
     }
+```
     
 
 Notice that if the data set cannot be found in the default location, i.e. testData/, then it is searched for on the classpath, so it is perfectly OK to have it next to the test class. 
@@ -312,6 +320,7 @@ As explained above, dbunit-express uses the less error-prone non-flat XML data s
 
 It's best combined with a parent class common to all tests or a custom subclass of EmbeddedDbTester[Rule]. You could for example create st. like this: 
 
+```java
     public class CustomEmbeddedDbTester extends EmbeddedDbTesterRule {
            
                private static ddlExecuted = false;
@@ -337,6 +346,7 @@ It's best combined with a parent class common to all tests or a custom subclass 
                }
            
            }
+```
     
 
 And use it as: 
@@ -352,6 +362,7 @@ You may want to have the possibility to disable the DB tests, f.ex. if you are u
 
 For example:
 
+```java
     public class CustomEmbeddedDbTester extends EmbeddedDbTesterRule {
        
            private static final boolean DISABLED = System.getProperties().containsKey("tests.db.disable");
@@ -364,6 +375,7 @@ For example:
            
            ...
        }
+```
 
 Difference between dbunit-express and DbUnit
 --------------------------------------
