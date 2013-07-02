@@ -1,5 +1,8 @@
 TODO
 
+- WIKI Mark the code examples as java for proper highlighting (4*quote java); include ex. of derbu jdbc url for in-mem
+- warn if the wrong version of derby used (i.e. w/o support for memory:; e.g. because on the classpath)
+
 - onSetup with autoInitializeDb: the query doesn't work with in-mem Derby (i.e. >0 schemas) => enable explicit "check if created" query? This would also enable it for other DBs
   Or f.ex. String defaultSchema = "SA"; ResultSet tables = getWrappedTester().getSqlConnection().getMetaData().getTables(null, defaultSchema, "%", new String[]{"TABLE"}); if (!tables.next()) do init
             
