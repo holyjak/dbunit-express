@@ -115,7 +115,7 @@ public class DatabaseCreator {
     /**
      * Execute the ddlStatements on the connection.
      * @param connection (required) connection to the target database.
-     * @param ddlStatements (required) DDL statements separated by semi-colon (';').
+     * @param ddlStatements (required) DDL statements separated by hash ('#').
      * It shouldn't contain any -- comments as JDBC may not be able to ignore them as appropriate.
      * @throws SQLException
      */
@@ -124,7 +124,7 @@ public class DatabaseCreator {
 
 		final java.sql.Statement ddlStmt = connection.createStatement();
 		try {
-	        final String[] statements = ddlStatements.split(";");
+	        final String[] statements = ddlStatements.split("#");
 
 	        for (int i = 0; i < statements.length; i++) {
 	        	if (statements[i].trim().length() > 0) {

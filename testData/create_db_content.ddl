@@ -3,8 +3,9 @@
 -- see net.jakubholy.testing.dbunit.DatabaseCreator#main.
 
 -- Replace the text below with whatever you need.
-create schema my_test_schema;
-
+create schema my_test_schema
+#
 create table my_test_schema.my_test_table (
 	id int primary key
-	, some_text varchar(225));
+	, some_text varchar(225))
+#	
