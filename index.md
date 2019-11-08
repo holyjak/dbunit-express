@@ -293,7 +293,7 @@ Notice that if the data set cannot be found in the default location, i.e. testDa
 
 By default DbUnit Express uses a file based Derby database. This is extremely useful when your tests fail and you need to see how has the data changed to understand why they fail. However there may be cases where you would prefer to use another database or a pure in-memory database. 
 
-To use an [in-memory Derby][18], set the `connectionUrl` property in the `dbunit-embedded.properties` file described above like this: 
+To use an [in-memory Derby][18], set the `connectionUrl` property in the `dbunit-express.properties` file described above like this: 
 
     dbunit.connectionUrl=jdbc:derby:memory:myDb;create=true
 
@@ -447,7 +447,7 @@ Migration from v1.2.0: Rename package from net.jakubholy.testing.derby.embedded 
     	isn't necessary anymore, which is useful e.g. in JUnit 4 or when extending another JUnit
     	derivation. It's also a standard DbUnit's IDatabaseTester.
     (2) It's now possible to change completely the DB used by defining some JDBC
-    	properties in dbunit-embedded.properties
+    	properties in dbunit-embedded.properties (now named dbunit-express.properties)
     (3) Added utility methods getDataSource, getSqlConnection and a convenience method
     	createCheckerForSelect, some of those implemented in  the EnhancedDatabaseTesterDecorator
     	so that they can be added to any IDatabaseTester.
